@@ -6,8 +6,10 @@ class Game:
 
     BLUE = (0, 0, 255)
     RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
     WHITE = (255, 255, 255)
     GREY = (128, 128, 128)
+    DARK_GREY = (64, 64, 64)
     SIZE = 50
     FONT = 'comicsans'
 
@@ -53,9 +55,9 @@ class Game:
         return True
 
     def state(self):
-        image = np.zeros((self._width, self._height, 3))
-        x = int(-self._snake[0][0] + self._width / 2)
-        y = int(-self._snake[0][1] + self._height / 2)
+        image = np.zeros((2 * self._width + 1, 2 * self._height + 1, 3))
+        x = self._width - self._snake[0][0]
+        y = self._height - self._snake[0][1]
         count = len(self._snake)
         for elem in self._snake:
             pos = self._translate(elem, (x, y))
@@ -82,6 +84,7 @@ class Game:
         direction = 1
         done = False
         alive = True
+        step = 0
 
         clock = pygame.time.Clock()
         font_score = pygame.font.SysFont(self.FONT, 20)
@@ -95,6 +98,7 @@ class Game:
                     self.reset()
                     alive = True
                     direction = 1
+                    step = 0
             if alive:
                 if ai_next_movement is None:
                     pressed = pygame.key.get_pressed()
@@ -113,19 +117,39 @@ class Game:
             if counter == speed:
                 alive = self.move(direction)
                 counter = 0
+                step += 1
 
             screen.fill((0, 0, 0))
             if alive:
+                previous_elem = None
+                size = int(self.SIZE * 0.8)
+                double_size = int(self.SIZE * 1.8)
+                offset = int(self.SIZE * 0.1)
                 for elem in self._snake:
-                    rect = pygame.Rect(elem[0] * self.SIZE, elem[1] * self.SIZE, self.SIZE, self.SIZE)
-                    pygame.draw.rect(screen, self.BLUE, rect)
+                    if previous_elem is None:
+                        rect = pygame.Rect(elem[0] * self.SIZE, elem[1] * self.SIZE, self.SIZE, self.SIZE)
+                        pygame.draw.rect(screen, self.GREEN, rect)
+                    else:
+                        if elem[0] - previous_elem[0] == 1:
+                            rect = pygame.Rect((elem[0] - 1) * self.SIZE + offset, elem[1] * self.SIZE + offset, double_size, size)
+                        elif elem[0] - previous_elem[0] == -1:
+                            rect = pygame.Rect(elem[0] * self.SIZE + offset, elem[1] * self.SIZE + offset, double_size, size)
+                        elif elem[1] - previous_elem[1] == 1:
+                            rect = pygame.Rect(elem[0] * self.SIZE + offset, (elem[1] - 1) * self.SIZE + offset, size, double_size)
+                        elif elem[1] - previous_elem[1] == -1:
+                            rect = pygame.Rect(elem[0] * self.SIZE + offset, elem[1] * self.SIZE + offset, size, double_size)
+                        pygame.draw.rect(screen, self.BLUE, rect)
+                    previous_elem = elem
                 for wall in self._walls:
                     rect = pygame.Rect(wall[0] * self.SIZE, wall[1] * self.SIZE, self.SIZE, self.SIZE)
+                    pygame.draw.rect(screen, self.DARK_GREY, rect)
+                    rect = pygame.Rect(wall[0] * self.SIZE + int(self.SIZE * 0.1), wall[1] * self.SIZE +
+                                       int(self.SIZE * 0.1), int(self.SIZE * 0.8), int(self.SIZE * 0.8))
                     pygame.draw.rect(screen, self.GREY, rect)
                 for food in self._foods:
                     rect = pygame.Rect(food[0] * self.SIZE, food[1] * self.SIZE, self.SIZE, self.SIZE)
-                    pygame.draw.rect(screen, (51 * food[2], 0, 0), rect)
-                text = font_score.render(str(self._score) + '/' + str(len(self._snake)), True, self.WHITE)
+                    pygame.draw.circle(screen, (10 * food[2], 0, 0), rect.center, int(self.SIZE * 0.4))
+                text = font_score.render(str(self._score), True, self.WHITE)
                 screen.blit(text, (game_width - text.get_width(), 15))
             else:
                 text1 = font_game_over.render('GAME OVER', True, self.WHITE)
@@ -138,7 +162,8 @@ class Game:
             clock.tick(60)
 
     def _generate_snake(self):
-        self._snake = [(4, 4), (3, 4), (2, 4)]
+        h = int(self._height / 2)
+        self._snake = [(3, h), (2, h), (1, h), (0, h)]
 
     def _generate_foods(self):
         self._foods = []
@@ -157,7 +182,7 @@ class Game:
                 eaten_food = food
                 reward = food[2]
         self._foods.remove(eaten_food)
-        if len(self._snake) + 5 <= self._width * self._height:
+        if len(self._snake) + len(self._rewards) + self._walls_number <= self._width * self._height:
             food = None
             while food is None:
                 new_food = (np.random.randint(0, self._width), np.random.randint(0, self._height), reward)
@@ -167,14 +192,26 @@ class Game:
 
     def _generate_walls(self):
         self._walls = []
+
+        for x in range(0, self._width):
+            self._walls += [(x, -1)]
+            self._walls += [(x, self._height)]
+
+        for y in range(0, self._height):
+            self._walls += [(-1, y)]
+            self._walls += [(self._width, y)]
+
         for i in range(0, self._walls_number):
             wall = None
             while wall is None:
                 wall = (np.random.randint(0, self._width), np.random.randint(0, self._height))
-                for x in range(-1, 2):
-                    for y in range(-1, 2):
-                        if wall is not None and self._is_dead(self._translate(wall, (x, y))):
-                            wall = None
+                if wall[1] == int(self._height / 2):
+                    wall = None
+                else:
+                    for x in range(-1, 2):
+                        for y in range(-1, 2):
+                            if (x + y) % 2 == 0 and wall is not None and self._is_wall(self._translate(wall, (x, y))):
+                                wall = None
             self._walls += [wall]
 
     def _is_dead(self, block):
@@ -198,24 +235,9 @@ class Game:
                 return True
         return False
 
-    def _translate(self, block, translation):
-        return self._bind_x(block[0] + translation[0]), self._bind_y(block[1] + translation[1])
-
-    def _bind_x(self, x):
-        if x < 0:
-            return x + self._width
-        elif x >= self._width:
-            return x - self._width
-        else:
-            return x
-
-    def _bind_y(self, y):
-        if y < 0:
-            return y + self._height
-        elif y >= self._height:
-            return y - self._height
-        else:
-            return y
+    @staticmethod
+    def _translate(block, translation):
+        return block[0] + translation[0], block[1] + translation[1]
 
     @property
     def score(self):

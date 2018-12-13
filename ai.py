@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 GAMMA = 0.99
-EPSILON_MIN = 0.05
+EPSILON_MIN = 0.02
 EPSILON_DECAY = 0.995
 
 
@@ -28,17 +28,17 @@ class Model:
     def __init__(self, state_size, action_size):
         self._state_size = state_size
         self._action_size = action_size
-        self._memory = Memory(200000)
+        self._memory = Memory(100000)
         self._epsilon = 1
         self._model = self._build_model()
 
     def _build_model(self):
         model = tf.keras.models.Sequential([
-            tf.keras.layers.Conv2D(16, (3, 3), input_shape=self._state_size, activation=tf.nn.relu),
+            tf.keras.layers.Conv2D(32, (3, 3), input_shape=self._state_size, activation=tf.nn.relu),
             tf.keras.layers.Conv2D(32, (3, 3), activation=tf.nn.relu),
-            tf.keras.layers.Conv2D(32, (3, 3), activation=tf.nn.relu),
+            tf.keras.layers.Conv2D(64, (3, 3), activation=tf.nn.relu),
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(32, activation=tf.nn.relu),
+            tf.keras.layers.Dense(64, activation=tf.nn.relu),
             tf.keras.layers.Dense(self._action_size)
         ])
         model.compile(optimizer=tf.train.AdamOptimizer(), loss='mse', metrics=['accuracy'])
