@@ -56,7 +56,8 @@ def train():
                     step += 1
                 scores[i] = game.score
             print('Episode {} of {}'.format(e + 1, EPISODES))
-            print('Average/ Min / Max score on a new game: {} / {} / {}'.format(np.mean(scores), np.min(scores), np.max(scores)))
+            print('Average/ Min / Max score on a new game: {} / {} / {}'.format(np.mean(scores), np.min(scores),
+                                                                                np.max(scores)))
             model.save(MODEL_FILE)
 
 
@@ -84,11 +85,7 @@ def play_ai():
     game = snake.Game(WIDTH, HEIGHT, WALLS_NUMBER, REWARDS)
     model = ai.Model(STATE_SIZE, ACTION_SIZE)
     model.load(MODEL_FILE)
-    game.play_new_game(5, model.act_best)
+    game.play_new_game(10, model.act_best)
 
 
-#play_human(20)
-#benchmark()
-#train()
-benchmark()
-#play_ai()
+play_ai()

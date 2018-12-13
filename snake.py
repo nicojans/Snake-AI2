@@ -131,13 +131,17 @@ class Game:
                         pygame.draw.rect(screen, self.GREEN, rect)
                     else:
                         if elem[0] - previous_elem[0] == 1:
-                            rect = pygame.Rect((elem[0] - 1) * self.SIZE + offset, elem[1] * self.SIZE + offset, double_size, size)
+                            rect = pygame.Rect((elem[0] - 1) * self.SIZE + offset, elem[1] * self.SIZE + offset,
+                                               double_size, size)
                         elif elem[0] - previous_elem[0] == -1:
-                            rect = pygame.Rect(elem[0] * self.SIZE + offset, elem[1] * self.SIZE + offset, double_size, size)
+                            rect = pygame.Rect(elem[0] * self.SIZE + offset, elem[1] * self.SIZE + offset,
+                                               double_size, size)
                         elif elem[1] - previous_elem[1] == 1:
-                            rect = pygame.Rect(elem[0] * self.SIZE + offset, (elem[1] - 1) * self.SIZE + offset, size, double_size)
+                            rect = pygame.Rect(elem[0] * self.SIZE + offset, (elem[1] - 1) * self.SIZE + offset,
+                                               size, double_size)
                         elif elem[1] - previous_elem[1] == -1:
-                            rect = pygame.Rect(elem[0] * self.SIZE + offset, elem[1] * self.SIZE + offset, size, double_size)
+                            rect = pygame.Rect(elem[0] * self.SIZE + offset, elem[1] * self.SIZE + offset,
+                                               size, double_size)
                         pygame.draw.rect(screen, self.BLUE, rect)
                     previous_elem = elem
                 for wall in self._walls:
